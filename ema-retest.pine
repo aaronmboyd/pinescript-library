@@ -1,0 +1,33 @@
+//@version=3
+strategy("MA_strategy" , shorttitle="MA_strategy", overlay=true, initial_capital=100000)
+
+// EMA length
+emaLength = 21
+
+// Creates the EMA series
+input = input(emaLength, minval=1 )
+ema = ema(close, input)
+
+// Plots the EMA 
+plot(ema, color=(ema >= ema[1] ? green : red), linewidth=3) 
+
+// BUY WHEN -
+// Previous candle closed above EMA 
+// Current candle wicks (touches) EMA
+inBoughtPosition = (strategy.opentrades > 0)
+prevCloseAboveEMA = (close[1] >= ema)
+currentLowBelowEMA = (low <= ema)
+buyCondition = (prevCloseAboveEMA and currentLowBelowEMA) and (not inBoughtPosition)
+
+// SELL WHEN -
+// You're in a bought position
+// Current candle closes below EMA8
+currentCloseBelowEMA = (close <= ema)
+sellCondition = (inBoughtPosition and currentCloseBelowEMA)
+
+// backgroundColor = ema >= ema[1] ? green : red
+// bgcolor(backgroundColor)
+
+ordersize=floor(strategy.equity / ema) // To dynamically calculate the order size as the account equity increases or decreases.
+strategy.entry("long",strategy.long, qty=ordersize, limit=ema, when=buyCondition)
+strategy.close("long", when = sellCondition )
