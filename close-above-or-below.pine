@@ -1,0 +1,51 @@
+//@version=4
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © LJPtn
+
+strategy("close_above_X_or_below_Y_strategy", shorttitle="close_above_X_or_below_Y_strategy", overlay=true, initial_capital=100000)
+
+// Define X
+x = 8700
+
+// Define Y
+y = 8000
+
+// Define target
+target = 9000
+
+hline(x)
+hline(y)
+hline(target)
+
+// Plots the X line
+plot(x, color=color.green, linewidth=3)
+
+// Plots the Y line
+plot(y, color=color.green, linewidth=3)
+
+// Plots the target
+plot(y, color=color.red, linewidth=3)
+
+// BUY WHEN -
+// You're not already in a bought position
+// AND
+// Previous candle closed above X 
+
+inBoughtPosition = strategy.opentrades > 0
+prevCloseAboveX = close[1] > x
+buyCondition = prevCloseAboveX and not inBoughtPosition
+
+// SELL WHEN -
+// You're in a bought position
+// AND
+// (Previous candle closed below Y OR Target is wicked)
+
+prevCloseBelowY = close[1] <= y
+targetWicked = high >= target
+sellCondition = inBoughtPosition and (prevCloseBelowY or targetWicked)
+
+// Assuming limit order
+ordersize = floor(strategy.equity / x)  // To dynamically calculate the order size as the account equity increases or decreases.
+strategy.entry("long", strategy.long, qty=ordersize, limit=x, when=buyCondition)
+strategy.close("long", when=sellCondition)
+
